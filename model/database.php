@@ -12,17 +12,14 @@ function getAllPhotos(): array {
     global $connection;
     
     $query = "SELECT
-                photo.id,
-                photo.titre,
-                photo.img,
-                photo.date_creation,
+                photo.*,
                 DATE_FORMAT(photo.date_creation, '%e %M %Y') AS 'date_creation_format',
-                photo.nb_likes,
+                
                 categorie.libelle AS categorie
             FROM photo
             INNER JOIN categorie ON categorie.id = photo.categorie_id
             ORDER BY photo.date_creation DESC
-            LIMIT 3;";
+            ;";
     
     $stmt = $connection->prepare($query);
     $stmt->execute();
@@ -30,19 +27,46 @@ function getAllPhotos(): array {
     return $stmt->fetchAll();
 }
 
+function getAllPhotosByCategorie(): array {
+    global $connection;
+    
+    $query = "SELECT
+                photo.*,
+                DATE_FORMAT(photo.date_creation, '%e %M %Y') AS 'date_creation_format',
+                photo.nb_likes,
+          
+                categorie.libelle AS categorie
+            FROM photo
+            INNER JOIN categorie ON categorie.id = photo.categorie_id
+            WHERE categorie.id = :id
+            ORDER BY photo.date_creation DESC
+            ;";
+    
+    $stmt = $connection->prepare($query);
+    $stmt->bindParam(":id", $id);
+    $stmt->execute();
+    
+    return $stmt->fetchAll();
+}
+
+
+
 function getPhoto(int $id): array {
     global $connection;
     
     $query = "SELECT
-                id,
-                titre,
-                img,
-                date_creation,
+                photo.id,
+                photo.titre,
+                photo.img,
+                photo.date_creation,
                 DATE_FORMAT(date_creation, '%e %M %Y') AS 'date_creation_format',
-                nb_likes,
-                description
+                photo.nb_likes,
+                photo.description,
+                photo.categorie_id,
+                categorie.libelle AS categorie
             FROM photo
-            WHERE id = :id;";
+            INNER JOIN categorie ON photo.categorie_id = categorie.id
+            WHERE photo.id = :id;";
     
     $stmt = $connection->prepare($query);
     $stmt->bindParam(":id", $id);
@@ -73,8 +97,24 @@ function getAllTagsByPhoto(int $id): array {
     
     return $stmt->fetchAll();
 }
-
-
+/**
+ * Récupérer les données d'une table
+ * @global PDO $connection
+ * @param string $table Nom de la table
+ * @param int $id Identifiant de la ligne
+ * @return array Tableau contenant les données retournées par la requête SQl
+ */
+function getEntity(string $table, int $id): array{
+    global $connection;
+    
+    $query = "SELECT * FROM $table WHERE id = :id";
+    
+     $stmt = $connection->prepare($query);
+    $stmt->bindParam(':id', $id);
+    $stmt->execute();
+    
+    return $stmt->fetch();
+}
 
 
 
